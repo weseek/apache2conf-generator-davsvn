@@ -113,7 +113,7 @@ def detect_repos(reposroot_path):
         return repos_info_list
 
     # process recursively
-    exclude_dirs = set([...])
+    exclude_dirs = set()
     for dirpath, dirnames, filenames in (
             os.walk(reposroot_path, followlinks=True)):
 
