@@ -161,10 +161,10 @@ optional arguments:
 Following placeholders are available in a template file.
 
 placeholder | description
--|-
-abspath  | absolute path to the target repository
-relpath  | relative path to the target repository from REPOS_ROOT
-basename | basename of the target repository
+:-----------|:-----------
+abspath     | absolute path to the target repository
+relpath     | relative path to the target repository from REPOS_ROOT
+basename    | basename of the target repository
 
 ### Template Mapping
 
