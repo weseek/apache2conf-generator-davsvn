@@ -18,6 +18,8 @@
 import argparse
 import os
 import sys
+import json
+import fnmatch
 from string import Template
 
 
@@ -38,30 +40,30 @@ def main():
     elif (not os.path.isdir(reposroot_path)):
         sys.exit("'{path}' is not a directory".format(path=reposroot_path))
 
+    # create template mappings
+    tplmap = {"*": "template-examples/with-htpasswd.tpl"}
+    with open("template-examples/multiple-templates/tplmap.json") as f:
+        tplmap = json.loads(f.read(), "utf-8")
+
     # detect
-    detected_dict = detect_repos(reposroot_path)
+    repos_info_list = detect_repos(reposroot_path)
 
     # print
-    print_conf(detected_dict)
+    print_conf(repos_info_list, tplmap)
 
 
 def detect_repos(reposroot_path):
     '''
-    return a list of dictionary
-        that have several informations of the SVN repositories
-
-        abspath:    absolute path of repository
-        relpath:    relative path from reposroot_path
-        basename:   basename of repository
+    return a list of ReposInfo instances
     '''
 
-    detected_list = []
+    repos_info_list = []
 
     # judge root
     reposroot_abs_path = os.path.abspath(reposroot_path)
     if (judge_svn_repos(reposroot_abs_path)):
-        detected_list.append(reposroot_abs_path)
-        return detected_list
+        repos_info_list.append(reposroot_abs_path)
+        return repos_info_list
 
     # process recursively
     exclude_dirs = set([...])
@@ -80,16 +82,16 @@ def detect_repos(reposroot_path):
             isSvnRepos = judge_svn_repos(abspath)
 
             if (isSvnRepos):
-                relpath = os.path.relpath(abspath, start=reposroot_path)
-                detected_list.append({
-                    'abspath': abspath,
-                    'relpath': relpath,
-                    'basename': dirname
-                })
+                info = ReposInfo()
+                info.abspath = abspath
+                info.relpath = os.path.relpath(abspath, start=reposroot_path)
+                info.basename = dirname
+
+                repos_info_list.append(info)
                 # modify dirnames (in order not to os.walk subdirectories)
                 exclude_dirs.add(abspath)
 
-    return detected_list
+    return repos_info_list
 
 
 def judge_svn_repos(path):
@@ -108,21 +110,47 @@ def judge_svn_repos(path):
             os.path.isdir(path_locks))
 
 
-def print_conf(detected_list):
-    '''
+def print_conf(repos_info_list, tplmap):
+    """
     print Apache2 Configuration to stdout
-    '''
 
-    for repos_info in detected_list:
-        print(generate_conf_unit(repos_info))
+    @param repos_info_list: list of ReposInfo instances
+    @param tplmap: template map
+            key: glob expression
+            value: template path
+    @type tplmap: dict
+    """
+
+    for repos_info in repos_info_list:
+        # pattern matching
+        for pattern, tpl_path in tplmap.items():
+            if fnmatch.fnmatch(repos_info.abspath, pattern):
+                print(generate_conf_unit(tpl_path, repos_info))
+                break
 
 
-def generate_conf_unit(repos_info):
-    tpl = open("template-examples/with-htpasswd.tpl")
-    t = Template(tpl.read())
-    tpl.close()
+def generate_conf_unit(tplpath, repos_info):
+    """
+    @param tplpath: template path
+    @param repos_info: ReposInfo
+    """
 
-    return t.safe_substitute(repos_info)
+    # open template
+    with open(tplpath) as tpl:
+        t = Template(tpl.read())
+        # substitute
+        return t.safe_substitute(repos_info.__dict__)
+
+
+class ReposInfo:
+    abspath = None
+    """absolute path of repository"""
+
+    relpath = None
+    """elative path from reposroot_path"""
+
+    basename = None
+    """basename of repository"""
 
 
 if __name__ == "__main__":
