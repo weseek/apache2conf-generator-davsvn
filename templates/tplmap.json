@@ -1,4 +1,4 @@
 {
-	"*/prj1/*": "template-examples/noauth.tpl",
-	"*": "template-examples/with-htpasswd.tpl"
+	"*/prj1/*": "templates/noauth.tpl",
+	"*": "templates/with-htpasswd.tpl"
 }
