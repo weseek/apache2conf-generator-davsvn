@@ -18,6 +18,7 @@
 import argparse
 import os
 import sys
+from string import Template
 
 
 def main():
@@ -37,15 +38,21 @@ def main():
     elif (not os.path.isdir(reposroot_path)):
         sys.exit("'{path}' is not a directory".format(path=reposroot_path))
 
-    detected_list = detect_repos(reposroot_path)
+    # detect
+    detected_dict = detect_repos(reposroot_path)
 
-    for detected in detected_list:
-        print(detected)
+    # print
+    print_conf(detected_dict)
 
 
 def detect_repos(reposroot_path):
     '''
-    return a list of SVN repositories path
+    return a list of dictionary
+        that have several informations of the SVN repositories
+
+        abspath:    absolute path of repository
+        relpath:    relative path from reposroot_path
+        basename:   basename of repository
     '''
 
     detected_list = []
@@ -73,7 +80,12 @@ def detect_repos(reposroot_path):
             isSvnRepos = judge_svn_repos(abspath)
 
             if (isSvnRepos):
-                detected_list.append(abspath)
+                relpath = os.path.relpath(abspath, start=reposroot_path)
+                detected_list.append({
+                    'abspath': abspath,
+                    'relpath': relpath,
+                    'basename': dirname
+                })
                 # modify dirnames (in order not to os.walk subdirectories)
                 exclude_dirs.add(abspath)
 
@@ -94,6 +106,23 @@ def judge_svn_repos(path):
             os.path.isdir(path_db) and
             os.path.isdir(path_hooks) and
             os.path.isdir(path_locks))
+
+
+def print_conf(detected_list):
+    '''
+    print Apache2 Configuration to stdout
+    '''
+
+    for repos_info in detected_list:
+        print(generate_conf_unit(repos_info))
+
+
+def generate_conf_unit(repos_info):
+    tpl = open("template-examples/with-htpasswd.tpl")
+    t = Template(tpl.read())
+    tpl.close()
+
+    return t.safe_substitute(repos_info)
 
 
 if __name__ == "__main__":
