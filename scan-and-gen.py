@@ -15,38 +15,85 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
 import os
 import sys
 import json
 import fnmatch
+from argparse import ArgumentParser
 from string import Template
+from collections import OrderedDict
+
+
+def create_argument_parser():
+    desc = """This program scans REPOS_ROOT, picks up Subversion repositories,
+           and outputs Apache2 configurations for dav-svn to STDOUT."""
+
+    # parse arguments
+    parser = ArgumentParser(description=desc)
+    parser.add_argument('reposroot_path', metavar='REPOS_ROOT',
+                        help='path to the directory ' +
+                             'that contains SVN repositories')
+    parser.add_argument('--tpl', metavar='TEMPLATE_FILE',
+                        help='path to an Apache2 configuration template file')
+    parser.add_argument('--tplmap', metavar='TEMPLATE_MAP_FILE',
+                        help='path to a JSON file ' +
+                             'that specify template mappings')
+
+    return parser
+
+
+def verify_arguments(args):
+    """
+    verify arguments
+
+    @param parser: dict of arguments
+    """
+
+    # verify option
+    if ((args.tpl and args.tplmap) or
+            (not args.tpl and not args.tplmap)):
+        sys.exit("you must specify only either one of --tpl and --tplmap")
+
+    # verify template file
+    if (args.tpl and not os.path.exists(args.tpl)):
+        sys.exit("'{0}' is not exists".format(args.tpl))
+    if (args.tpl and not os.path.isfile(args.tpl)):
+        sys.exit("'{0}' is not a file".format(args.tpl))
+
+    # verify template file
+    if (args.tplmap and not os.path.exists(args.tplmap)):
+        sys.exit("'{0}' is not exists".format(args.tpl))
+    if (args.tplmap and not os.path.isfile(args.tplmap)):
+        sys.exit("'{0}' is not a file".format(args.tpl))
+
+    # verify reposroot_path
+    reposroot_path = args.reposroot_path
+    if (not os.path.exists(reposroot_path)):
+        sys.exit("'{0}' is not exists".format(reposroot_path))
+    elif (not os.path.isdir(reposroot_path)):
+        sys.exit("'{0}' is not a directory".format(reposroot_path))
 
 
 def main():
     # parse arguments
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('reposroot_path', metavar='REPOS_ROOT',
-                        help='path to the directory ' +
-                             'that contains SVN repositories')
+    parser = create_argument_parser()
 
     args = parser.parse_args()
 
-    reposroot_path = args.reposroot_path
+    # verify
+    # if there is invalid args, sys.exit will be called.
+    verify_arguments(args)
 
-    # verify whethere directory or not
-    if (not os.path.exists(reposroot_path)):
-        sys.exit("directory not exists: " + reposroot_path)
-    elif (not os.path.isdir(reposroot_path)):
-        sys.exit("'{path}' is not a directory".format(path=reposroot_path))
-
-    # create template mappings
-    tplmap = {"*": "template-examples/with-htpasswd.tpl"}
-    with open("template-examples/multiple-templates/tplmap.json") as f:
-        tplmap = json.loads(f.read(), "utf-8")
+    # create default template mappings
+    tplmap = {"*": args.tpl}
+    # custom template mappings from JSON (using OrderedDict)
+    if (args.tplmap):
+        with open(args.tplmap) as f:
+            tplmap = json.loads(f.read(), encoding="utf-8",
+                                object_pairs_hook=OrderedDict)
 
     # detect
-    repos_info_list = detect_repos(reposroot_path)
+    repos_info_list = detect_repos(args.reposroot_path)
 
     # print
     print_conf(repos_info_list, tplmap)
@@ -67,8 +114,8 @@ def detect_repos(reposroot_path):
 
     # process recursively
     exclude_dirs = set([...])
-    for dirpath, dirnames, filenames in os.walk(reposroot_path,
-                                                followlinks=True):
+    for dirpath, dirnames, filenames in (
+            os.walk(reposroot_path, followlinks=True)):
 
         # skip exlude_dirs contains
         if (dirpath in exclude_dirs):
