@@ -1,7 +1,8 @@
 apache2conf-generator-davsvn
 =============================
 
-A python script iterates specified directory recursively, scan Subversion repositories and generate Apache2 configuration for dav-svn.
+A python script iterates specified directory recursively,  
+scan Subversion repositories and generate Apache2 configuration for dav-svn.
 
 Requirements
 ------------
@@ -154,7 +155,7 @@ optional arguments:
                         path to a JSON file that specify template mappings
 ```
 
-* You must specify only either one of --tpl and --tplmap.
+* You must specify only either one of `--tpl` and `--tplmap`.
 
 ### Template
 
