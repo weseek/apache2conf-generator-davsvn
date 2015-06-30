@@ -9,13 +9,13 @@ Requirements
 * Python 3
 
 
-Summary
+Example
 -------
 
 sample structure of directories:
 
 ```
-/home/user                 [normal dir]
+/var/repos                 [normal dir]
   repos1                 > [SVN repository]
   repos2                 > [SVN repository]
   notrepos                 [normal dir or file]
@@ -28,7 +28,7 @@ sample structure of directories:
 
 ### Case1:
 
-`template-examples/noauth.tpl`
+With [`templates/noauth.tpl`](https://github.com/weseek/apache2conf-generator-davsvn/blob/master/templates/noauth.tpl):
 
 ```
 <Location /svn/$relpath>
@@ -37,59 +37,64 @@ sample structure of directories:
 </Location>
 ```
 
+following command:
+
 ```bash
-$ python scan-and-gen.py --tpl template-examples/noauth.tpl /path/to/reposroot
+$ python scan-and-gen.py --tpl templates/noauth.tpl /var/repos
 ```
 
-will outputs:
+will output:
 
 ```
 <Location /svn/repos1>
   DAV svn
-  SVNPath /home/user/repos/repos1
+  SVNPath /var/repos/repos1
 </Location>
 
 <Location /svn/repos2>
   DAV svn
-  SVNPath /home/user/repos/repos2
+  SVNPath /var/repos/repos2
 </Location>
 
 <Location /svn/prj1/prj1-repos1>
   DAV svn
-  SVNPath /home/user/repos/prj1/prj1-repos1
+  SVNPath /var/repos/prj1/prj1-repos1
 </Location>
 
 <Location /svn/prj1/prj1-repos2>
   DAV svn
-  SVNPath /home/user/repos/prj1/prj1-repos2
+  SVNPath /var/repos/prj1/prj1-repos2
 </Location>
 
 <Location /svn/prj2/prj2-repos>
   DAV svn
-  SVNPath /home/user/repos/prj2/prj2-repos1
+  SVNPath /var/repos/prj2/prj2-repos1
 </Location>
 ```
 
 ### Case2:
 
-`tplmap.json`
+With [`templates/tplmap.json`](https://github.com/weseek/apache2conf-generator-davsvn/blob/master/templates/tplmap.json):
+
 ```
 {
-	"*/prj1/*": "template-examples/noauth.tpl",
-	"*": "template-examples/with-htpasswd.tpl"
+	"*/prj1/*": "templates/noauth.tpl",
+	"*": "templates/with-htpasswd.tpl"
 }
 ```
 
+following command:
+
 ```bash
-$ python scan-and-gen.py --tplmap template-examples/multiple-templates/tplmap.json /path/to/reposroot
+$ python scan-and-gen.py --tplmap templates/tplmap.json /var/repos
 ```
 
-will outputs:
+will output:
 
 ```
 <Location /svn/repos1>
   DAV svn
-  SVNPath /home/vagrant/repos/repos1
+  SVNPath /var/repos/repos1
   AuthType Basic
   AuthName "SVN Authentication"
   AuthUserFile /home/user/.htpasswd
@@ -98,7 +103,7 @@ will outputs:
 
 <Location /svn/repos2>
   DAV svn
-  SVNPath /home/vagrant/repos/repos2
+  SVNPath /var/repos/repos2
   AuthType Basic
   AuthName "SVN Authentication"
   AuthUserFile /home/user/.htpasswd
@@ -107,17 +112,17 @@ will outputs:
 
 <Location /svn/prj1/prj1-repos1>
   DAV svn
-  SVNPath /home/vagrant/repos/prj1/prj1-repos1
+  SVNPath /var/repos/prj1/prj1-repos1
 </Location>
 
 <Location /svn/prj1/prj1-repos2>
   DAV svn
-  SVNPath /home/vagrant/repos/prj1/prj1-repos2
+  SVNPath /var/repos/prj1/prj1-repos2
 </Location>
 
 <Location /svn/prj2/prj2-repos>
   DAV svn
-  SVNPath /home/vagrant/repos/prj2/prj2-repos1
+  SVNPath /var/repos/prj2/prj2-repos1
   AuthType Basic
   AuthName "SVN Authentication"
   AuthUserFile /home/user/.htpasswd
@@ -125,6 +130,48 @@ will outputs:
 </Location>
 
 ```
+
+
+Usage
+-------
+
+### scan-and-gen.py
+
+```
+$ python scan-and-gen.py -h
+usage: scan-and-gen.py [-h] [--tpl TEMPLATE_FILE] [--tplmap TEMPLATE_MAP_FILE] REPOS_ROOT
+
+This program scans REPOS_ROOT, picks up Subversion repositories, and outputs
+Apache2 configurations for dav-svn to STDOUT.
+
+positional arguments:
+  REPOS_ROOT            path to the directory that contains SVN repositories
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --tpl TEMPLATE_FILE   path to an Apache2 configuration template file
+  --tplmap TEMPLATE_MAP_FILE
+                        path to a JSON file that specify template mappings
+```
+
+* You must specify only either one of --tpl and --tplmap.
+
+### Template
+
+Following placeholders are available in a template file.
+
+placeholder | description
+-|-
+abspath  | absolute path to the target repository
+relpath  | relative path to the target repository from REPOS_ROOT
+basename | basename of the target repository
+
+### Template Mapping
+
+* A JSON file specifing rules.
+  * key: [fnmatch pattern](https://docs.python.org/3.4/library/fnmatch.html)
+  * value: path to a template file
+* The upper rules are stronger than the lower rules.
 
 Contributing
 ------------
