@@ -79,8 +79,9 @@ With [`templates/tplmap.json`](https://github.com/weseek/apache2conf-generator-d
 
 ```
 {
-	"*/prj1/*": "templates/noauth.tpl",
-	"*": "templates/with-htpasswd.tpl"
+  "*/prj1/*": "templates/empty.tpl",
+  "*/prj2/*": "templates/noauth.tpl",
+  "*": "templates/with-htpasswd.tpl"
 }
 ```
 
@@ -111,23 +112,9 @@ will output:
   Require valid-user
 </Location>
 
-<Location /svn/prj1/prj1-repos1>
-  DAV svn
-  SVNPath /var/repos/prj1/prj1-repos1
-</Location>
-
-<Location /svn/prj1/prj1-repos2>
-  DAV svn
-  SVNPath /var/repos/prj1/prj1-repos2
-</Location>
-
 <Location /svn/prj2/prj2-repos>
   DAV svn
   SVNPath /var/repos/prj2/prj2-repos
-  AuthType Basic
-  AuthName "SVN Authentication"
-  AuthUserFile /home/user/.htpasswd
-  Require valid-user
 </Location>
 
 ```

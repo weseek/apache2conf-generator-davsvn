@@ -1,4 +1,5 @@
 {
-	"*/prj1/*": "templates/noauth.tpl",
+	"*/prj1/*": "templates/empty.tpl",
+	"*/prj2/*": "templates/noauth.tpl",
 	"*": "templates/with-htpasswd.tpl"
 }
