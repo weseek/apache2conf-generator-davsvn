@@ -69,7 +69,7 @@ will output:
 
 <Location /svn/prj2/prj2-repos>
   DAV svn
-  SVNPath /var/repos/prj2/prj2-repos1
+  SVNPath /var/repos/prj2/prj2-repos
 </Location>
 ```
 
@@ -123,7 +123,7 @@ will output:
 
 <Location /svn/prj2/prj2-repos>
   DAV svn
-  SVNPath /var/repos/prj2/prj2-repos1
+  SVNPath /var/repos/prj2/prj2-repos
   AuthType Basic
   AuthName "SVN Authentication"
   AuthUserFile /home/user/.htpasswd
